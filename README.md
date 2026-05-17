@@ -82,7 +82,7 @@
 
 > **Three steps: `clone → set a secret key → docker compose up`.** On macOS/Linux it's **one line**. Most of this README is reference — new users don't need to read it to get started.
 
-**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) with Compose (Docker Desktop on Windows/macOS, or Docker Engine + Compose plugin on Linux), and **Git**. Node.js is **not** required (prebuilt UI is in `frontend/dist`).
+**Prerequisites:** [Docker](https://docs.docker.com/get-docker/) with Compose (Docker Desktop on Windows/macOS, or Docker Engine + Compose plugin on Linux), and **Git**. Node.js is **not** required — the frontend is pulled as a prebuilt image from GHCR.
 
 ### macOS / Linux (Bash) — one line
 
@@ -123,15 +123,15 @@ For deeper configuration, first-run checks, and troubleshooting, see **[Installa
 
 ## Related repositories
 
-This monorepo ships the **backend**, **Docker Compose** stack, **documentation**, and a **prebuilt** web UI under `frontend/dist`. Use the sibling repos when you need source-level UI changes or the mobile app:
+This repo ships the **backend**, **Docker Compose** stack, and **documentation**. The web UI image is published independently to GHCR by the sibling Vue repo. Use the sibling repos when you need source-level UI changes or the mobile app:
 
 | Repository | What it is |
 |------------|------------|
-| **[QuantDinger](https://github.com/brokermr810/QuantDinger)** (this repo) | Backend (Flask/Python), deployment, docs, bundled web assets |
-| **[QuantDinger-Vue](https://github.com/brokermr810/QuantDinger-Vue)** | **Web frontend source** (Vue)—themes, forks, `npm run build` → replace `frontend/dist` |
-| **[QuantDinger-Mobile](https://github.com/brokermr810/QuantDinger-Mobile)** | **Open-source mobile client**—pairs with your self-hosted or SaaS backend |
+| **[QuantDinger](https://github.com/brokermr810/QuantDinger)** (this repo) | Backend (Flask/Python), Compose stack, docs |
+| **[QuantDinger-Vue](https://github.com/brokermr810/QuantDinger-Vue)** | **Web frontend source** (Vue) — tagging `v*` publishes `ghcr.io/brokermr810/quantdinger-frontend` automatically |
+| **[QuantDinger-Mobile](https://github.com/brokermr810/QuantDinger-Mobile)** | **Open-source mobile client** — pairs with your self-hosted or SaaS backend |
 
-**Note:** Node.js is only required if you build the web UI from **QuantDinger-Vue**; the default Docker quick start does not need it.
+**Note:** Node.js is only required if you build the web UI from **QuantDinger-Vue**; the default Docker quick start pulls the published image and does not need it.
 
 ## Use it from an AI agent (Cursor / Claude Code / Codex / MCP)
 
@@ -208,7 +208,7 @@ QuantDinger is a **self-hosted** quantitative OS: **AI-assisted research**, **Py
 
 ## Architecture
 
-**Stack:** Nginx serves the prebuilt Vue app (`frontend/dist`); **Flask** API runs strategy/AI/billing services; **PostgreSQL** holds state; **Redis** backs workers. Exchanges, brokers, LLMs, and payments plug in through env-driven adapters. Crypto **market data** and **order execution** paths are separated by design.
+**Stack:** Nginx serves the prebuilt Vue app (published as `ghcr.io/brokermr810/quantdinger-frontend`); **Flask** API runs strategy/AI/billing services; **PostgreSQL** holds state; **Redis** backs workers. Exchanges, brokers, LLMs, and payments plug in through env-driven adapters. Crypto **market data** and **order execution** paths are separated by design.
 
 **Runtime (short):** data feeds → backtest/strategy engine → live runtime → exchange adapters; pending orders dispatched per venue.
 
@@ -272,7 +272,7 @@ flowchart LR
 
 > **Already ran [Try in 2 minutes](#try-in-2-minutes)?** Skip this section — it's the same outcome, just expanded into a step-by-step checklist for first-time deployers and operations folks who want to understand every knob.
 
-This section mirrors a typical “local deploy” path: **prepare the host → obtain the code → configure secrets → start the stack → verify → harden → optionally wire AI**. Node.js is **not** required: the repo ships a **prebuilt** UI under `frontend/dist` and Nginx serves it inside the `frontend` container.
+This section mirrors a typical “local deploy” path: **prepare the host → obtain the code → configure secrets → start the stack → verify → harden → optionally wire AI**. Node.js is **not** required: the `frontend` service pulls `ghcr.io/brokermr810/quantdinger-frontend` directly, so Nginx serves the SPA without any local build step.
 
 ### Prerequisites
 
@@ -333,12 +333,30 @@ docker compose -f docker-compose.ghcr.yml up -d
 The backend entrypoint auto-generates a random `SECRET_KEY` on first start and applies the schema (`migrations/init.sql`) idempotently. Edit `backend.env` for persistent overrides (API keys, OAuth, broker credentials). Compose orchestration knobs go in a separate `.env` (optional) — e.g. pin a version:
 
 ```env
+# Common case: lockstep both sides to one tag
 IMAGE_TAG=v3.0.9
+
+# Advanced (opt-in): decouple sides. Either var alone overrides only
+# that side; the other still follows IMAGE_TAG.
+# BACKEND_TAG=v3.0.9
+# FRONTEND_TAG=v3.1.0-rc1
+
 # BACKEND_IMAGE=ghcr.io/<your-fork>/quantdinger-backend     # optional, for forks
 # FRONTEND_IMAGE=ghcr.io/<your-fork>/quantdinger-frontend
 ```
 
-Defaults: `ghcr.io/brokermr810/quantdinger-backend:latest` + `ghcr.io/brokermr810/quantdinger-frontend:latest`.
+Tag resolution: `BACKEND_TAG` / `FRONTEND_TAG` → `IMAGE_TAG` → `latest`. Defaults: `ghcr.io/brokermr810/quantdinger-backend:latest` + `ghcr.io/brokermr810/quantdinger-frontend:latest`.
+
+#### Alternative: build the frontend from Vue source
+
+If you have access to the **QuantDinger-Vue** repo and want to iterate on UI source (theme tweaks, forks, debugging) instead of pulling the published image, clone it into the `./QuantDinger-Vue/` slot at the repo root (gitignored) and let Compose build from there:
+
+```bash
+git clone https://github.com/brokermr810/QuantDinger-Vue.git QuantDinger-Vue
+docker compose up -d --build      # frontend builds from ./QuantDinger-Vue
+```
+
+Without `--build` Compose pulls the GHCR image as usual — the `./QuantDinger-Vue/` directory is referenced lazily and may not exist. Point `FRONTEND_SRC_PATH=/abs/path/to/QuantDinger-Vue` if you'd rather keep the source somewhere else. The locally built image is tagged the same way as the published one (`FRONTEND_TAG` / `IMAGE_TAG` rules apply), so it slots into the rest of the stack with no further changes.
 
 ### 5) Verify and sign in
 

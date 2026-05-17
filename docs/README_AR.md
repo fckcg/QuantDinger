@@ -76,7 +76,7 @@
 
 ## بدء سريع
 
-**المتطلبات:** [Docker](https://docs.docker.com/get-docker/) + Compose و**Git**. **لا حاجة لـ Node.js** (واجهة ويب مُجمَّعة مسبقًا في `frontend/dist`).
+**المتطلبات:** [Docker](https://docs.docker.com/get-docker/) + Compose و**Git**. **لا حاجة لـ Node.js** (واجهة ويب مُجمَّعة مسبقًا في GHCR).
 
 ### macOS / Linux
 
@@ -122,7 +122,7 @@ docker-compose up -d --build
 | المستودع | المحتوى |
 |----------|---------|
 | **[QuantDinger](https://github.com/brokermr810/QuantDinger)** (هذا المستودع) | الخلفية، Compose، الوثائق، ويب مُجمَّع |
-| **[QuantDinger-Vue](https://github.com/brokermr810/QuantDinger-Vue)** | **مصدر الويب** (Vue) — `npm run build` ثم استبدل `frontend/dist` |
+| **[QuantDinger-Vue](https://github.com/brokermr810/QuantDinger-Vue)** | **مصدر الويب** (Vue) — وسم `v*` ينشر تلقائيًا `ghcr.io/brokermr810/quantdinger-frontend` |
 | **[QuantDinger-Mobile](https://github.com/brokermr810/QuantDinger-Mobile)** | **عميل الجوال** (مفتوح المصدر) |
 
 </div>
@@ -229,7 +229,8 @@ flowchart LR
      curl -o backend.env https://raw.githubusercontent.com/brokermr810/QuantDinger/main/backend_api_python/env.example
      docker compose -f docker-compose.ghcr.yml up -d
      ```
-     الصور الافتراضية: `ghcr.io/brokermr810/quantdinger-{backend,frontend}:latest`. لتثبيت إصدار محدد اضبط `IMAGE_TAG=v3.0.9` في ملف `.env` محلي.
+     الصور الافتراضية: `ghcr.io/brokermr810/quantdinger-{backend,frontend}:latest`. لتثبيت إصدار محدد اضبط `IMAGE_TAG=v3.0.9` في ملف `.env` محلي (أو `BACKEND_TAG` / `FRONTEND_TAG` لتجاوز جانب واحد فقط).
+   - **التطوير المحلي للواجهة**: استنسخ `QuantDinger-Vue` إلى `./QuantDinger-Vue/` (مُتجاهَل من Git) وشغّل `docker compose up -d --build`. التفاصيل في [README الإنجليزي](../README.md#alternative-build-the-frontend-from-vue-source).
 4. **الويب:** `http://localhost:8888` · **صحة API:** `http://localhost:5000/api/health`
 5. غيّر كلمة مرور المسؤول الافتراضية قبل الإنتاج. اضبط **`FRONTEND_URL`** في `backend_api_python/.env` على عنوانك الفعلي.
 

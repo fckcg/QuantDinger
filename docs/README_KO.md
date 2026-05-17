@@ -70,7 +70,7 @@
 
 ## 빠른 시작
 
-**필요:** [Docker](https://docs.docker.com/get-docker/) + Compose, **Git**. **Node.js 불필요**(`frontend/dist`에 빌드된 UI 포함).
+**필요:** [Docker](https://docs.docker.com/get-docker/) + Compose, **Git**. **Node.js 불필요**(프론트엔드 이미지는 GHCR에서 가져옴).
 
 ### macOS / Linux
 
@@ -108,7 +108,7 @@ Git for Windows Bash에서는 위 macOS/Linux 한 줄 명령을 그대로 사용
 | 저장소 | 내용 |
 |--------|------|
 | **[QuantDinger](https://github.com/brokermr810/QuantDinger)** (본 저장소) | 백엔드, Compose, 문서, 프리빌드 Web |
-| **[QuantDinger-Vue](https://github.com/brokermr810/QuantDinger-Vue)** | **Web 프론트 소스**(Vue) — `npm run build`로 `frontend/dist` 교체 |
+| **[QuantDinger-Vue](https://github.com/brokermr810/QuantDinger-Vue)** | **Web 프론트 소스**(Vue) — `v*` 태그가 `ghcr.io/brokermr810/quantdinger-frontend`를 자동 발행 |
 | **[QuantDinger-Mobile](https://github.com/brokermr810/QuantDinger-Mobile)** | **모바일 클라이언트**(오픈소스) |
 
 <h2 id="mcp--agent-게이트웨이">MCP / Agent 게이트웨이</h2>
@@ -207,7 +207,8 @@ flowchart LR
      curl -o backend.env https://raw.githubusercontent.com/brokermr810/QuantDinger/main/backend_api_python/env.example
      docker compose -f docker-compose.ghcr.yml up -d
      ```
-     기본 이미지: `ghcr.io/brokermr810/quantdinger-{backend,frontend}:latest`. 버전 고정은 로컬 `.env`에 `IMAGE_TAG=v3.0.9`.
+     기본 이미지: `ghcr.io/brokermr810/quantdinger-{backend,frontend}:latest`. 양쪽을 동시에 고정하려면 로컬 `.env`에 `IMAGE_TAG=v3.0.9`, 한쪽만 고정하려면 `BACKEND_TAG` / `FRONTEND_TAG`.
+   - **프론트엔드 로컬 개발**: `QuantDinger-Vue`를 `./QuantDinger-Vue/`(gitignore)에 클론 후 `docker compose up -d --build`. 자세한 내용은 [영어 README](../README.md#alternative-build-the-frontend-from-vue-source) 참고.
 4. **Web:** `http://localhost:8888` · **API 헬스:** `http://localhost:5000/api/health`
 5. 프로덕션 전 기본 관리자 비밀번호 변경. `backend_api_python/.env`의 **`FRONTEND_URL`**을 실제 URL에 맞추세요.
 
